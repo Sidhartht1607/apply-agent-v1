@@ -6,17 +6,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system packages needed for building/running the app and Tectonic.
+# Install system packages needed for running the app and Tectonic.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    cargo \
-    pkg-config \
-    libssl-dev \
     ca-certificates \
-    && cargo install tectonic --locked \
-    && apt-get purge -y build-essential pkg-config libssl-dev \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/* /root/.cargo/registry /root/.cargo/git
+    tectonic \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
