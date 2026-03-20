@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     tar \
     xz-utils \
-    && curl -L -o /tmp/tectonic.tar.gz https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.15.0/tectonic-0.15.0-x86_64-unknown-linux-gnu.tar.gz \
+    && curl -L -o /tmp/tectonic.tar.gz https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.15.0/tectonic-0.15.0-x86_64-unknown-linux-musl.tar.gz \
     && tar -xzf /tmp/tectonic.tar.gz -C /tmp \
     && mv /tmp/tectonic /usr/local/bin/tectonic \
     && chmod +x /usr/local/bin/tectonic \
