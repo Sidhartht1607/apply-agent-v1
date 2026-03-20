@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libgraphite2-dev \
     libharfbuzz-dev \
-    && cargo install tectonic --locked \
+    && cargo install tectonic \
     && which tectonic \
     && tectonic --version \
     && apt-get purge -y build-essential pkg-config libssl-dev \
