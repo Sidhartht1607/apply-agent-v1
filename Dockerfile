@@ -6,23 +6,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system packages and a modern Rust toolchain to build Tectonic.
+# Install system packages and fetch prebuilt Tectonic binary.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
     ca-certificates \
     curl \
-    pkg-config \
-    libssl-dev \
-    libfreetype6-dev \
-    libgraphite2-dev \
-    libharfbuzz-dev \
-    && curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain stable \
-    && /root/.cargo/bin/rustc --version \
-    && /root/.cargo/bin/cargo install tectonic \
-    && cp /root/.cargo/bin/tectonic /usr/local/bin/tectonic \
+    tar \
+    xz-utils \
+    && curl -L -o /tmp/tectonic.tar.gz https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.15.0/tectonic-0.15.0-x86_64-unknown-linux-gnu.tar.gz \
+    && tar -xzf /tmp/tectonic.tar.gz -C /tmp \
+    && mv /tmp/tectonic /usr/local/bin/tectonic \
+    && chmod +x /usr/local/bin/tectonic \
     && which tectonic \
     && tectonic --version \
-    && rm -rf /var/lib/apt/lists/* /root/.cargo/registry /root/.cargo/git
+    && rm -rf /var/lib/apt/lists/* /tmp/tectonic.tar.gz
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
