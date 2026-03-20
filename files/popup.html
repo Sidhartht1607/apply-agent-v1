@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ResumeForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0e0e0e;
+      --paper: #f5f0e8;
+      --cream: #ede7d6;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --rust: #b85c3a;
+      --sage: #4a6741;
+      --muted: #7a7060;
+      --border: #d4c9b0;
+      --shadow: rgba(14,14,14,0.12);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      /* Use dynamic viewport units so Chrome side panel / mobile-like viewports
+         don't clip content when the available height is smaller than 580px. */
+      min-height: 100dvh;
+      background: var(--paper);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.5;
+    }
+
+    /* ── SCREENS ── */
+    /* In the Chrome side panel the viewport height can be quite small.
+       Avoid fixed/min heights that cause the login UI to be cut off. */
+    .screen {
+      display: none;
+      flex-direction: column;
+      min-height: 100dvh;
+      animation: fadeUp 0.4s ease both;
+    }
+    .screen.active { display: flex; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════ */
+    #login-screen {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 0;
+      position: relative;
+      /* Allow vertical scroll so the login button/footer are never clipped */
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .login-art {
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, var(--gold) 0%, transparent 70%);
+      opacity: 0.15;
+    }
+    .login-art-2 {
+      position: absolute;
+      bottom: 60px; left: -80px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--rust) 0%, transparent 70%);
+      opacity: 0.12;
+    }
+
+    .login-inner {
+      position: relative;
+      z-index: 2;
+      padding: 48px 36px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      min-height: 100%;
+    }
+
+    /* Tighter layout on short viewports (common for the Chrome side panel) */
+    @media (max-height: 700px) {
+      .login-inner { padding: 32px 20px 24px; gap: 22px; }
+      .login-heading { font-size: 24px; }
+    }
+
+    @media (max-height: 520px) {
+      .login-inner { padding: 22px 18px 18px; gap: 16px; }
+      .brand-name { font-size: 20px; }
+      .login-heading { font-size: 20px; }
+      .btn-login { padding: 12px; }
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: var(--gold);
+      clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--paper);
+    }
+
+    .brand-tagline {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-left: 2px;
+    }
+
+    .login-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+      opacity: 0.6;
+    }
+
+    .login-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1.2;
+      color: var(--paper);
+    }
+
+    .login-heading span {
+      color: var(--gold-light);
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .auth-card {
+      position: relative;
+      transition: transform 0.35s ease, opacity 0.35s ease;
+    }
+
+    .auth-card.signup-mode {
+      transform: translateY(-2px) scale(1.01);
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 4px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    .auth-tab.active {
+      background: var(--gold);
+      color: var(--ink);
+      box-shadow: 0 8px 18px rgba(201,168,76,0.18);
+    }
+
+    .hidden { display: none !important; }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .field-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--paper);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .field-input::placeholder { color: rgba(255,255,255,0.25); }
+    .field-input:focus {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.08);
+    }
+
+    .test-hint {
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      text-align: center;
+      margin-top: -4px;
+    }
+    .test-hint strong { color: var(--gold-light); font-weight: 500; }
+
+    .btn-login {
+      margin-top: 4px;
+      background: var(--gold);
+      color: var(--ink);
+      border: none;
+      border-radius: 6px;
+      padding: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.2s;
+    }
+
+    .btn-login:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+
+    .btn-login::before,
+    .btn-generate::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 90%;
+      height: 100%;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.28), transparent);
+      transition: left 0.55s ease;
+    }
+
+    .btn-login:hover::before,
+    .btn-generate:hover::after {
+      left: 140%;
+    }
+
+    .login-error {
+      font-size: 12px;
+      color: #e07060;
+      text-align: center;
+      min-height: 16px;
+    }
+
+    .login-footer {
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+      text-align: center;
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ══════════════════════════════
+       MAIN APP SCREEN
+    ══════════════════════════════ */
+    #app-screen {
+      background: var(--paper);
+    }
+
+    /* ── HEADER ── */
+    .app-header {
+      background: var(--ink);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-header::after {
+      content: '';
+      position: absolute;
+      inset: auto -20% -40% auto;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(201,168,76,0.18), transparent 70%);
+      pointer-events: none;
+      animation: floatGlow 5s ease-in-out infinite;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-brand-icon {
+      width: 24px; height: 24px;
+      background: var(--gold);
+      clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%);
+    }
+
+    .app-brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: -0.3px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 4px 10px 4px 4px;
+    }
+
+    .user-avatar {
+      width: 22px; height: 22px;
+      background: var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .user-name {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      font-weight: 500;
+    }
+
+    .user-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .user-stats {
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .btn-logout {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--rust); color: #e07060; }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex;
+      background: var(--cream);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .tab:hover { color: var(--ink); }
+    .tab.active {
+      color: var(--ink);
+      border-bottom-color: var(--gold);
+      background: var(--paper);
+    }
+
+    /* ── TAB CONTENT ── */
+    .tab-content { display: none; flex: 1; flex-direction: column; }
+    .tab-content.active { display: flex; }
+
+    /* ── JD TAB ── */
+    .jd-tab {
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .jd-detected-banner {
+      background: linear-gradient(135deg, rgba(74,103,65,0.1), rgba(74,103,65,0.05));
+      border: 1px solid rgba(74,103,65,0.3);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--sage);
+    }
+
+    .jd-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--sage);
+      flex-shrink: 0;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .jd-textarea {
+      flex: 1;
+      min-height: 200px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ink);
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .jd-textarea:focus { border-color: var(--gold); }
+    .jd-textarea::placeholder { color: var(--border); }
+
+    .char-count {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* ── RESUME TAB ── */
+    .resume-tab {
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: white;
+      text-align: center;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.04);
+    }
+
+    .upload-icon {
+      width: 48px; height: 48px;
+      background: var(--cream);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+
+    .upload-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .upload-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .upload-btn-label {
+      font-size: 12px;
+      color: var(--gold);
+      font-weight: 500;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    #resume-file-input { display: none; }
+
+    .file-attached {
+      background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.05));
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .file-info { flex: 1; }
+    .file-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+    .file-size { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .file-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--muted);
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .file-remove:hover { color: var(--rust); }
+
+    /* ── RESUME PDF PREVIEW (uploaded file) ── */
+    .resume-preview-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+    }
+
+    .resume-preview-section.visible { display: flex; }
+
+    .resume-preview-header {
+      background: var(--cream);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .resume-preview-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .resume-embed-wrap {
+      height: 260px;
+      background: #f0ece3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .resume-embed-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: white;
+    }
+
+    .resume-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    /* ── GENERATE TAB ── */
+    .generate-tab {
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .readiness-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: softRise 0.45s ease both;
+    }
+
+    .stats-panel {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(14,14,14,0.04);
+      animation: softRise 0.5s ease both;
+    }
+
+    .stat-card-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .stat-card-value {
+      margin-top: 6px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+      font-family: 'Playfair Display', serif;
+    }
+
+    .readiness-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .readiness-label { color: var(--muted); }
+
+    .readiness-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .badge-ok { background: rgba(74,103,65,0.1); color: var(--sage); }
+    .badge-missing { background: rgba(184,92,58,0.1); color: var(--rust); }
+
+    .match-score-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .match-score-section.visible { display: flex; }
+
+    .score-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .score-title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .score-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .score-value.high { color: var(--sage); }
+    .score-value.mid { color: var(--gold); }
+    .score-value.low { color: var(--rust); }
+
+    .score-bar-track {
+      height: 6px;
+      background: var(--cream);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--gold);
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+    }
+
+    .score-bar-fill.high { background: var(--sage); }
+    .score-bar-fill.mid { background: var(--gold); }
+    .score-bar-fill.low { background: var(--rust); }
+
+    .score-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .score-stat {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .score-stat-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .score-stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .missing-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .kw-chip {
+      background: rgba(184,92,58,0.08);
+      border: 1px solid rgba(184,92,58,0.2);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: var(--rust);
+    }
+
+    .btn-generate {
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: 8px;
+      padding: 15px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-generate::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(201,168,76,0.15));
+    }
+
+    .btn-generate:hover:not(:disabled) { background: #1e1e1e; transform: translateY(-1px); box-shadow: 0 4px 16px var(--shadow); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-generate .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    .btn-generate.loading .spinner { display: block; }
+    .btn-generate.loading .btn-text { opacity: 0.7; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── PDF PREVIEW ── */
+    .pdf-preview-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+    }
+
+    .pdf-preview-section.visible { display: flex; }
+
+    .pdf-preview-header {
+      background: var(--cream);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pdf-preview-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .btn-download {
+      background: var(--gold);
+      color: var(--ink);
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-download:hover { background: var(--gold-light); }
+
+    .pdf-embed-wrap {
+      height: 300px;
+      background: #f0ece3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .pdf-embed-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .pdf-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pdf-placeholder-icon { font-size: 36px; }
+
+    /* ── STATUS MESSAGES ── */
+    .status-msg {
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .status-msg.visible { display: block; }
+    .status-msg.error { background: rgba(184,92,58,0.1); color: var(--rust); }
+    .status-msg.success { background: rgba(74,103,65,0.1); color: var(--sage); }
+    .status-msg.info { background: rgba(201,168,76,0.1); color: #8a6a1a; }
+
+    .status-msg.visible {
+      animation: softRise 0.35s ease;
+    }
+
+    /* ── PROGRESS STEPS ── */
+    .progress-steps {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .progress-steps.visible { display: flex; }
+
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--cream);
+      transition: color 0.3s;
+    }
+
+    .progress-step:last-child { border-bottom: none; }
+
+    .step-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .progress-step.done .step-dot { background: var(--sage); }
+    .progress-step.done { color: var(--ink); }
+    .progress-step.active .step-dot { background: var(--gold); animation: pulse 1s infinite; }
+
+    .screen.flash-success {
+      animation: screenFlash 0.6s ease;
+    }
+
+    @keyframes softRise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatGlow {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+      50% { transform: translateY(-8px) scale(1.06); opacity: 1; }
+    }
+
+    @keyframes screenFlash {
+      0% { filter: brightness(1); }
+      35% { filter: brightness(1.06); }
+      100% { filter: brightness(1); }
+    }
+    .progress-step.active { color: var(--ink); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ LOGIN SCREEN ══════════════════ -->
+<div id="login-screen" class="screen active">
+  <div class="login-art"></div>
+  <div class="login-art-2"></div>
+  <div class="login-inner">
+
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-icon"></div>
+        <span class="brand-name">ResumeForge</span>
+      </div>
+      <span class="brand-tagline">AI-Powered Resume Tailoring</span>
+    </div>
+
+    <div class="login-divider"></div>
+
+    <h2 class="login-heading">Craft resumes that<br><span>get noticed.</span></h2>
+
+    <div class="login-form auth-card" id="auth-card">
+      <div class="field-group hidden" id="signup-name-group">
+        <label class="field-label">Full Name</label>
+        <input type="text" class="field-input" id="signup-name" placeholder="Enter your full name" autocomplete="off"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <input type="text" class="field-input" id="login-user" placeholder="Enter your username" autocomplete="off"/>
+      </div>
+      <div class="field-group hidden" id="signup-email-group">
+        <label class="field-label">Email</label>
+        <input type="email" class="field-input" id="signup-email" placeholder="Enter your email" autocomplete="off"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <input type="password" class="field-input" id="login-pass" placeholder="Enter your password"/>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="auth-tab-login" type="button">Log In</button>
+        <button class="auth-tab" id="auth-tab-signup" type="button">Sign Up</button>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button class="btn-login" id="btn-login">Log In →</button>
+    </div>
+
+    <p class="login-footer">ResumeForge v1.0 · Powered by LangGraph + Groq</p>
+  </div>
+</div>
+
+<!-- ══════════════════ APP SCREEN ══════════════════ -->
+<div id="app-screen" class="screen">
+
+  <div class="app-header">
+    <div class="app-brand">
+      <div class="app-brand-icon"></div>
+      <span class="app-brand-name">ResumeForge</span>
+    </div>
+    <div class="header-actions">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">D</div>
+        <div class="user-meta">
+          <span class="user-name" id="user-display">demo</span>
+          <span class="user-stats" id="user-usage">0 builds</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sign out</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" data-tab="jd">Job Description</div>
+    <div class="tab" data-tab="resume">Resume</div>
+    <div class="tab" data-tab="generate">Generate</div>
+  </div>
+
+  <!-- JD TAB -->
+  <div class="tab-content jd-tab active" id="tab-jd">
+    <span class="section-label">Detected from page</span>
+    <div class="jd-detected-banner" id="jd-banner">
+      <div class="jd-dot"></div>
+      <span>Job description detected on this page — loaded below</span>
+    </div>
+    <textarea class="jd-textarea" id="jd-text" placeholder="Paste or edit the job description here…"></textarea>
+    <span class="char-count" id="char-count">0 characters</span>
+  </div>
+
+  <!-- RESUME TAB -->
+  <div class="tab-content resume-tab" id="tab-resume">
+    <span class="section-label">Your Resume</span>
+
+    <div class="upload-zone" id="upload-zone">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Drop your resume here</div>
+      <div class="upload-sub">PDF format · Max 10MB</div>
+      <label class="upload-btn-label" for="resume-file-input">Browse files</label>
+      <input type="file" id="resume-file-input" accept=".pdf"/>
+    </div>
+
+    <div class="file-attached" id="file-attached" style="display:none;">
+      <div class="file-icon">📎</div>
+      <div class="file-info">
+        <div class="file-name" id="file-name">resume.pdf</div>
+        <div class="file-size" id="file-size">—</div>
+      </div>
+      <button class="file-remove" id="file-remove">✕</button>
+    </div>
+
+    <div class="resume-preview-section" id="resume-preview-section">
+      <div class="resume-preview-header">
+        <span class="resume-preview-title">Resume Preview</span>
+      </div>
+      <div class="resume-embed-wrap">
+        <div class="resume-placeholder" id="resume-placeholder">
+          <div style="font-size: 34px;">📄</div>
+          <span>Upload a PDF to preview it here</span>
+        </div>
+        <iframe id="resume-iframe" style="display:none;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- GENERATE TAB -->
+  <div class="tab-content generate-tab" id="tab-generate">
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="stat-card-label">Builder Uses</span>
+        <div class="stat-card-value" id="usage-count-card">0</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-label">Member Name</span>
+        <div class="stat-card-value" id="member-name-card">—</div>
+      </div>
+    </div>
+
+    <span class="section-label">Readiness Check</span>
+    <div class="readiness-card">
+      <div class="readiness-row">
+        <span class="readiness-label">Job Description</span>
+        <span class="readiness-badge badge-missing" id="ready-jd">✕ Missing</span>
+      </div>
+      <div class="readiness-row">
+        <span class="readiness-label">Resume</span>
+        <span class="readiness-badge badge-missing" id="ready-resume">✕ Missing</span>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="btn-generate" disabled>
+      <div class="spinner"></div>
+      <span class="btn-text">⚡ Generate Tailored Resume</span>
+    </button>
+
+    <div class="progress-steps" id="progress-steps">
+      <div class="progress-step" id="step-1"><div class="step-dot"></div> Analysing job description</div>
+      <div class="progress-step" id="step-2"><div class="step-dot"></div> Scoring resume match</div>
+      <div class="progress-step" id="step-3"><div class="step-dot"></div> Rewriting resume content</div>
+      <div class="progress-step" id="step-4"><div class="step-dot"></div> Compiling PDF</div>
+    </div>
+
+    <div class="status-msg" id="status-msg"></div>
+
+    <div class="match-score-section" id="match-score-section">
+      <div class="score-header">
+        <span class="score-title">Match Score</span>
+        <span class="score-value" id="score-value">—</span>
+      </div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" id="score-bar"></div>
+      </div>
+      <div class="score-stats">
+        <div class="score-stat">
+          <span class="score-stat-label">Total Keywords</span>
+          <span class="score-stat-value" id="total-keywords-value">—</span>
+        </div>
+        <div class="score-stat">
+          <span class="score-stat-label">Matched</span>
+          <span class="score-stat-value" id="matched-keywords-value">—</span>
+        </div>
+        <div class="score-stat">
+          <span class="score-stat-label">Missing</span>
+          <span class="score-stat-value" id="missing-keywords-count">—</span>
+        </div>
+      </div>
+      <div class="missing-keywords" id="missing-keywords"></div>
+    </div>
+
+    <div class="pdf-preview-section" id="pdf-preview-section">
+      <div class="pdf-preview-header">
+        <span class="pdf-preview-title">Preview</span>
+        <button class="btn-download" id="btn-download">⬇ Download PDF</button>
+      </div>
+      <div class="pdf-embed-wrap">
+        <div class="pdf-placeholder" id="pdf-placeholder">
+          <div class="pdf-placeholder-icon">📋</div>
+          <span>Your resume will appear here</span>
+        </div>
+        <iframe id="pdf-iframe" style="display:none;"></iframe>
+      </div>
+    </div>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

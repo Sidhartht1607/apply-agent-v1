@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: resumeforge-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: resumeforge
+      POSTGRES_USER: resumeforge
+      POSTGRES_PASSWORD: resumeforge
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resumeforge -d resumeforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "ResumeForge",
+  "version": "1.0",
+  "description": "AI-powered resume tailoring — right from any job listing.",
+  "action": {
+    "default_title": "ResumeForge"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "https://www.linkedin.com/*",
+    "https://boards.greenhouse.io/*",
+    "https://jobs.lever.co/*",
+    "https://myworkdayjobs.com/*",
+    "https://www.indeed.com/*",
+    "*://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
