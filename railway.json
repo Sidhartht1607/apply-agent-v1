@@ -2,7 +2,7 @@
   "$schema": "https://railway.app/railway.schema.json",
   "deploy": {
     "builder": "DOCKERFILE",
-    "startCommand": "uvicorn backend.main:fastapi_app --host 0.0.0.0 --port ${PORT:-8000}",
+    "startCommand": "python -c \"import os,uvicorn; uvicorn.run('backend.main:fastapi_app', host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))\"",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
