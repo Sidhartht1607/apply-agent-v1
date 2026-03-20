@@ -7,6 +7,8 @@ This app is called from a Chrome extension side panel. That means:
 
 import io
 import logging
+import os
+import shutil
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header
@@ -61,6 +63,11 @@ if not logging.getLogger().handlers:
     )
 
 logger.info("Auth database backend initialized: %s", database_backend_label())
+logger.info(
+    "Tectonic availability at startup | which=%s | PATH=%s",
+    shutil.which("tectonic"),
+    os.environ.get("PATH"),
+)
 
 
 def _count_resume_artifacts() -> dict[str, int]:
