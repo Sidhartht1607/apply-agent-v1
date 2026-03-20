@@ -6,21 +6,22 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system packages needed to compile and run Tectonic.
+# Install system packages and a modern Rust toolchain to build Tectonic.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
-    cargo \
+    curl \
     pkg-config \
     libssl-dev \
     libfreetype6-dev \
     libgraphite2-dev \
     libharfbuzz-dev \
-    && cargo install tectonic \
+    && curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain stable \
+    && /root/.cargo/bin/rustc --version \
+    && /root/.cargo/bin/cargo install tectonic \
+    && cp /root/.cargo/bin/tectonic /usr/local/bin/tectonic \
     && which tectonic \
     && tectonic --version \
-    && apt-get purge -y build-essential pkg-config libssl-dev \
-    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /root/.cargo/registry /root/.cargo/git
 
 COPY requirements.txt .
