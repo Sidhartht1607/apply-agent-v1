@@ -1,7 +1,7 @@
 // popup.js — side panel UI logic for ResumeForge
 // NOTE: MV3 extensions block inline scripts, so this file is loaded by popup.html.
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'https://web-production-356b1.up.railway.app';
 const AUTH_STORAGE_KEY = 'resumeforge_auth';
 
 // Must match backend threshold logic (see backend/nodes.py MATCH_THRESHOLD)

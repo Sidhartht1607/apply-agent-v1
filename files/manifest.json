@@ -16,6 +16,7 @@
   ],
   "host_permissions": [
     "http://127.0.0.1:8000/*",
+    "https://web-production-356b1.up.railway.app/*",
     "https://www.linkedin.com/*",
     "https://boards.greenhouse.io/*",
     "https://jobs.lever.co/*",

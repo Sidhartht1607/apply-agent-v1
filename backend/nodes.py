@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -312,11 +313,34 @@ def tex_file_creator(state: Match_Analysis):
 
 def compile_pdf(state: Match_Analysis):
     tex_path = f"resume/{state['resume_filename']}.tex"
-    output = subprocess.run(
-        ["tectonic", tex_path],
-        capture_output=True,
-        text=True,
-    )
+    tectonic_path = shutil.which("tectonic")
+    if not tectonic_path:
+        logger.error(
+            "PDF compilation skipped for %s | tectonic binary not found in runtime",
+            state.get("resume_filename", "unknown_resume"),
+        )
+        return {
+            "pdf_conversion_result": -1,
+            "latex_error": "Tectonic is not installed on the server runtime.",
+            "retry_count": state.get("retry_count", 0) + 1,
+        }
+
+    try:
+        output = subprocess.run(
+            [tectonic_path, tex_path],
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        logger.exception(
+            "PDF compilation failed for %s | tectonic binary disappeared before execution",
+            state.get("resume_filename", "unknown_resume"),
+        )
+        return {
+            "pdf_conversion_result": -1,
+            "latex_error": "Tectonic is not available on the server runtime.",
+            "retry_count": state.get("retry_count", 0) + 1,
+        }
     if output.returncode != 0:
         context = _latex_error_context(tex_path, output.stderr)
         logger.error(
